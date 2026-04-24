@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Adaptive Keyboard POC",
+    "slug": "adaptive-keyboard-poc",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "platforms": ["android", "ios"],
+    "android": {
+      "package": "com.example.adaptivekeyboard"
+    },
+    "ios": {
+      "bundleIdentifier": "com.example.adaptivekeyboard",
+      "supportsTablet": false
+    },
+    "plugins": ["expo-sqlite"],
+    "assetBundlePatterns": ["assets/**/*"]
+  }
+}
