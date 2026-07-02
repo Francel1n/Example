@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>LOWBALL — The Daily Negotiation Game</title>
+  <meta name="description" content="One deal a day. Everyone haggles with the same seller. Outsmart them, score big, share your result. A new negotiation puzzle every day at midnight UTC." />
+  <meta property="og:title" content="LOWBALL — The Daily Negotiation Game" />
+  <meta property="og:description" content="One deal a day. Read the seller, pick your tactic, name your price. Can you beat today's negotiation?" />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0d1117" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤝</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    // PostHog (EU cloud)
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_ye8WYpxhfHwjnXHNFAm8GNWKFX5h6twnCz4sMyTcCgUi', {
+      api_host: 'https://eu.i.posthog.com',
+      defaults: '2025-05-24',
+      person_profiles: 'identified_only'
+    });
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="icon-btn" id="btn-help" aria-label="How to play">?</button>
+    <h1 class="logo">LOW<span>BALL</span> <span class="logo-emoji">🤝</span></h1>
+    <button class="icon-btn" id="btn-stats" aria-label="Statistics">📊</button>
+  </header>
+
+  <main class="game" id="game">
+    <section class="deal-card" id="deal-card">
+      <div class="deal-emoji" id="deal-emoji">📦</div>
+      <div class="deal-info">
+        <div class="deal-title" id="deal-title"></div>
+        <div class="deal-sub" id="deal-sub"></div>
+      </div>
+      <div class="deal-price">
+        <div class="deal-price-label" id="deal-price-label">asking</div>
+        <div class="deal-price-value" id="deal-ask"></div>
+      </div>
+    </section>
+
+    <section class="seller-bar">
+      <span id="seller-mood" class="seller-mood">🙂</span>
+      <span id="seller-name" class="seller-name"></span>
+      <span class="rounds" id="rounds-left"></span>
+    </section>
+
+    <section class="chat" id="chat" aria-live="polite"></section>
+
+    <section class="controls" id="controls">
+      <div class="tactics" id="tactics"></div>
+      <div class="tactic-hint" id="tactic-hint">Pick a tactic, then name your price.</div>
+      <div class="offer-row">
+        <div class="offer-input-wrap">
+          <input type="number" id="offer-input" inputmode="numeric" placeholder="Your offer" min="1" />
+          <span class="currency" id="currency-symbol">€</span>
+        </div>
+        <button class="btn btn-primary" id="btn-offer" disabled>Offer</button>
+      </div>
+      <button class="btn btn-ghost" id="btn-accept"></button>
+      <button class="btn btn-ghost hidden" id="btn-walk">Walk away 🚶</button>
+    </section>
+
+    <section class="endgame hidden" id="endgame">
+      <button class="btn btn-primary btn-wide" id="btn-results">See results</button>
+    </section>
+  </main>
+
+  <!-- Help modal -->
+  <div class="modal hidden" id="modal-help">
+    <div class="modal-box">
+      <button class="modal-close" data-close>×</button>
+      <h2>How to play</h2>
+      <p><strong>One deal a day.</strong> Everyone in the world haggles with the same seller over the same item. The seller has a <strong>hidden floor price</strong> — your job is to get as close to it as possible.</p>
+      <ul class="help-list">
+        <li>💬 You have <strong>5 offers</strong>. Each one comes with a <strong>tactic</strong>.</li>
+        <li>🧠 Every seller has a personality. Read their intro and their replies — the right tactic on the right person works wonders. The wrong one can blow up the deal.</li>
+        <li>😡 Lowball too hard and they get angry. Too angry, and they walk. Repeat the same trick and it stops working.</li>
+        <li>🤝 Close the deal anytime at their current price — or hold out for a better one.</li>
+      </ul>
+      <p class="help-score">Score = how much of the possible discount you captured, out of 100. Share your emoji grid, keep your streak alive.</p>
+      <p class="help-tagline">New deal at midnight UTC. 🌙</p>
+    </div>
+  </div>
+
+  <!-- Stats modal -->
+  <div class="modal hidden" id="modal-stats">
+    <div class="modal-box">
+      <button class="modal-close" data-close>×</button>
+      <h2>Statistics</h2>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-num" id="stat-played">0</div><div class="stat-label">Played</div></div>
+        <div class="stat"><div class="stat-num" id="stat-deals">0</div><div class="stat-label">Deals closed</div></div>
+        <div class="stat"><div class="stat-num" id="stat-avg">–</div><div class="stat-label">Avg score</div></div>
+        <div class="stat"><div class="stat-num" id="stat-best">–</div><div class="stat-label">Best</div></div>
+        <div class="stat"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Streak 🔥</div></div>
+        <div class="stat"><div class="stat-num" id="stat-maxstreak">0</div><div class="stat-label">Max streak</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results modal -->
+  <div class="modal hidden" id="modal-results">
+    <div class="modal-box">
+      <button class="modal-close" data-close>×</button>
+      <h2 id="result-title">Deal closed!</h2>
+      <div class="result-score" id="result-score">0</div>
+      <div class="result-grade" id="result-grade"></div>
+      <p class="result-detail" id="result-detail"></p>
+      <div class="result-grid" id="result-grid"></div>
+      <button class="btn btn-primary btn-wide" id="btn-share">Share result 📋</button>
+      <button class="btn btn-ghost btn-wide" id="btn-practice">Play a practice deal 🎲</button>
+      <div class="countdown">Next deal in <span id="countdown">–</span></div>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
