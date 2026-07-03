@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convert JPG &amp; PNG images to PDF without uploading — free &amp; private | NoUpload</title>
+  <meta name="description" content="Turn photos and scans into a single PDF, entirely in your browser. No upload, no server, no account. Your images never leave your device." />
+  <meta name="theme-color" content="#0a7d4f" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/ph.js"></script>
+  <script src="vendor/pdf-lib.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="logo" href="./"><span class="no">No</span>Upload<span class="no">.</span></a>
+      <nav class="nav">
+        <a href="merge.html">Merge</a>
+        <a href="split.html">Split</a>
+        <a href="organize.html">Organize</a>
+        <a href="images-to-pdf.html" class="active">Images → PDF</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="tool-page container">
+    <span class="privacy-pill"><span class="dot"></span> processed on your device</span>
+    <h1>Images to PDF</h1>
+    <p class="lede">Combine JPG and PNG photos or scans into one PDF — one image per page,
+    in the order listed. Perfect for receipts, IDs and paper forms you photographed.</p>
+
+    <div class="dropzone" id="dropzone">
+      <div class="dz-icon">🖼️</div>
+      <div class="dz-main">Drop images here, or click to choose</div>
+      <div class="dz-sub">JPG and PNG</div>
+    </div>
+
+    <div class="file-list" id="file-list"></div>
+
+    <div class="options-row hidden" id="options">
+      <label for="page-size">Page size</label>
+      <select id="page-size">
+        <option value="auto">Same as each image</option>
+        <option value="a4">A4 portrait (image centered)</option>
+      </select>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-primary" id="btn-convert" disabled>Create PDF</button>
+      <button class="btn btn-ghost hidden" id="btn-clear">Clear all</button>
+    </div>
+
+    <div class="result-box hidden" id="result">
+      <div class="r-text">
+        <div class="r-title">PDF created!</div>
+        <div class="r-sub" id="result-sub"></div>
+      </div>
+      <button class="btn btn-primary" id="btn-download">Download PDF</button>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>NoUpload — private PDF tools</span>
+      <span class="upload-counter">Bytes of your files uploaded: 0 (and always will be)</span>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { imagesToPdf } from './js/pdf-ops.js';
+    import { initDropzone, readFileBytes, downloadBytes, humanSize, toast, busy } from './js/ui.js';
+    import { track } from './js/analytics.js';
+
+    const images = []; // { name, bytes, type }
+    let output = null;
+
+    const list = document.getElementById('file-list');
+    const options = document.getElementById('options');
+    const btnConvert = document.getElementById('btn-convert');
+    const btnClear = document.getElementById('btn-clear');
+    const result = document.getElementById('result');
+
+    function typeOf(file) {
+      if (file.type === 'image/png' || /\.png$/i.test(file.name)) return 'png';
+      if (file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name)) return 'jpg';
+      return null;
+    }
+
+    function render() {
+      list.innerHTML = '';
+      images.forEach((f, i) => {
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        row.innerHTML = `
+          <span class="f-icon">🖼️</span>
+          <span class="f-name">${f.name}</span>
+          <span class="f-meta">${f.type.toUpperCase()} · ${humanSize(f.bytes.length)}</span>`;
+        const up = document.createElement('button');
+        up.textContent = '↑'; up.disabled = i === 0;
+        up.onclick = () => { [images[i - 1], images[i]] = [images[i], images[i - 1]]; render(); };
+        const down = document.createElement('button');
+        down.textContent = '↓'; down.disabled = i === images.length - 1;
+        down.onclick = () => { [images[i + 1], images[i]] = [images[i], images[i + 1]]; render(); };
+        const del = document.createElement('button');
+        del.textContent = '✕';
+        del.onclick = () => { images.splice(i, 1); render(); };
+        row.append(up, down, del);
+        list.appendChild(row);
+      });
+      options.classList.toggle('hidden', images.length === 0);
+      btnConvert.disabled = images.length === 0;
+      btnClear.classList.toggle('hidden', images.length === 0);
+      result.classList.add('hidden');
+      output = null;
+    }
+
+    initDropzone(document.getElementById('dropzone'), {
+      accept: 'image/jpeg,image/png,.jpg,.jpeg,.png',
+      onFiles: async (dropped) => {
+        for (const file of dropped) {
+          const type = typeOf(file);
+          if (!type) { toast(`${file.name}: only JPG and PNG are supported.`, true); continue; }
+          try {
+            images.push({ name: file.name, bytes: await readFileBytes(file), type });
+          } catch (e) {
+            toast(e.message, true);
+          }
+        }
+        track('files_added', { tool: 'images-to-pdf', count: dropped.length, total_files: images.length });
+        render();
+      },
+    });
+
+    btnConvert.addEventListener('click', async () => {
+      const done = busy(btnConvert, 'Converting…');
+      const t0 = performance.now();
+      try {
+        const pageSize = document.getElementById('page-size').value;
+        output = await imagesToPdf(images, { pageSize });
+        document.getElementById('result-sub').textContent =
+          `${images.length} image${images.length === 1 ? '' : 's'} · ${humanSize(output.length)}`;
+        result.classList.remove('hidden');
+        result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        track('tool_run', {
+          tool: 'images-to-pdf', files: images.length, page_size: pageSize,
+          bytes_out: output.length, ms: Math.round(performance.now() - t0),
+        });
+      } catch (e) {
+        toast('One of the images could not be embedded. Is it a valid JPG/PNG?', true);
+        track('tool_error', { tool: 'images-to-pdf', stage: 'run', message: String(e.message || e) });
+      } finally {
+        done();
+      }
+    });
+
+    btnClear.addEventListener('click', () => { images.length = 0; render(); });
+
+    document.getElementById('btn-download').addEventListener('click', () => {
+      if (!output) return;
+      downloadBytes(output, 'images.pdf');
+      track('download_clicked', { tool: 'images-to-pdf', bytes: output.length });
+    });
+  </script>
+</body>
+</html>

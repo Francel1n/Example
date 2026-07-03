@@ -2,122 +2,122 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>LOWBALL — The Daily Negotiation Game</title>
-  <meta name="description" content="One deal a day. Everyone haggles with the same seller. Outsmart them, score big, share your result. A new negotiation puzzle every day at midnight UTC." />
-  <meta property="og:title" content="LOWBALL — The Daily Negotiation Game" />
-  <meta property="og:description" content="One deal a day. Read the seller, pick your tactic, name your price. Can you beat today's negotiation?" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoUpload — Free PDF tools that never upload your files</title>
+  <meta name="description" content="Merge, split, reorder and convert PDFs entirely in your browser. Your files never leave your device — no upload, no server, no account, no limits. Verify it in your network tab." />
+  <meta property="og:title" content="NoUpload — PDF tools that never see your files" />
+  <meta property="og:description" content="Merge, split and organize PDFs 100% locally in your browser. No upload. No account. No limits. Free forever." />
   <meta property="og:type" content="website" />
-  <meta name="theme-color" content="#0d1117" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤝</text></svg>" />
+  <meta name="theme-color" content="#0a7d4f" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>" />
   <link rel="stylesheet" href="css/style.css" />
-  <script>
-    // PostHog (EU cloud)
-    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-    posthog.init('phc_ye8WYpxhfHwjnXHNFAm8GNWKFX5h6twnCz4sMyTcCgUi', {
-      api_host: 'https://eu.i.posthog.com',
-      defaults: '2025-05-24',
-      person_profiles: 'identified_only'
-    });
-  </script>
+  <script src="js/ph.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <button class="icon-btn" id="btn-help" aria-label="How to play">?</button>
-    <h1 class="logo">LOW<span>BALL</span> <span class="logo-emoji">🤝</span></h1>
-    <button class="icon-btn" id="btn-stats" aria-label="Statistics">📊</button>
+  <header class="site-header">
+    <div class="container">
+      <a class="logo" href="./"><span class="no">No</span>Upload<span class="no">.</span></a>
+      <nav class="nav">
+        <a href="merge.html">Merge</a>
+        <a href="split.html">Split</a>
+        <a href="organize.html">Organize</a>
+        <a href="images-to-pdf.html">Images → PDF</a>
+      </nav>
+    </div>
   </header>
 
-  <main class="game" id="game">
-    <section class="deal-card" id="deal-card">
-      <div class="deal-emoji" id="deal-emoji">📦</div>
-      <div class="deal-info">
-        <div class="deal-title" id="deal-title"></div>
-        <div class="deal-sub" id="deal-sub"></div>
-      </div>
-      <div class="deal-price">
-        <div class="deal-price-label" id="deal-price-label">asking</div>
-        <div class="deal-price-value" id="deal-ask"></div>
+  <main>
+    <section class="hero container">
+      <span class="privacy-pill"><span class="dot"></span> 0 bytes uploaded — ever</span>
+      <h1>PDF tools that <em>never see</em> your files</h1>
+      <p class="sub">Merge, split, reorder and convert PDFs right here in your browser.
+      Your contracts, payslips and medical records stay on <strong>your</strong> device —
+      because uploading them was never technically necessary.</p>
+      <div class="proof">
+        <span class="icon">🔎</span>
+        <span><strong>Don't take our word for it.</strong> Open your browser's DevTools → Network tab
+        and process a file. You'll see zero requests carrying your document. Everything runs locally
+        with in-browser PDF engines.</span>
       </div>
     </section>
 
-    <section class="seller-bar">
-      <span id="seller-mood" class="seller-mood">🙂</span>
-      <span id="seller-name" class="seller-name"></span>
-      <span class="rounds" id="rounds-left"></span>
+    <section class="container">
+      <div class="tools-grid">
+        <a class="tool-card" href="merge.html">
+          <span class="t-icon">🗂️</span>
+          <h3>Merge PDFs</h3>
+          <p>Combine multiple PDFs into one, in the order you choose.</p>
+        </a>
+        <a class="tool-card" href="split.html">
+          <span class="t-icon">✂️</span>
+          <h3>Split &amp; extract pages</h3>
+          <p>Pull out exactly the pages you need — "1-3, 7, 12-" style.</p>
+        </a>
+        <a class="tool-card" href="organize.html">
+          <span class="t-icon">🔀</span>
+          <h3>Organize pages</h3>
+          <p>See every page. Drag to reorder, rotate, delete. Export.</p>
+        </a>
+        <a class="tool-card" href="images-to-pdf.html">
+          <span class="t-icon">🖼️</span>
+          <h3>Images → PDF</h3>
+          <p>Turn JPG and PNG photos or scans into a single clean PDF.</p>
+        </a>
+      </div>
     </section>
 
-    <section class="chat" id="chat" aria-live="polite"></section>
-
-    <section class="controls" id="controls">
-      <div class="tactics" id="tactics"></div>
-      <div class="tactic-hint" id="tactic-hint">Pick a tactic, then name your price.</div>
-      <div class="offer-row">
-        <div class="offer-input-wrap">
-          <input type="number" id="offer-input" inputmode="numeric" placeholder="Your offer" min="1" />
-          <span class="currency" id="currency-symbol">€</span>
+    <section class="section container">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="n">1</span>
+          <h3>Your browser does the work</h3>
+          <p>Modern browsers can read and write PDF files natively fast. We ship the PDF engine to you, not your files to us.</p>
         </div>
-        <button class="btn btn-primary" id="btn-offer" disabled>Offer</button>
+        <div class="step">
+          <span class="n">2</span>
+          <h3>Nothing is transmitted</h3>
+          <p>There is no upload endpoint. No server ever touches your document — there's no server-side processing at all.</p>
+        </div>
+        <div class="step">
+          <span class="n">3</span>
+          <h3>No account, no limits</h3>
+          <p>No sign-up walls, no "2 files per day", no watermarks, no premium tier. Static files are cheap to serve; free stays free.</p>
+        </div>
       </div>
-      <button class="btn btn-ghost" id="btn-accept"></button>
-      <button class="btn btn-ghost hidden" id="btn-walk">Walk away 🚶</button>
     </section>
 
-    <section class="endgame hidden" id="endgame">
-      <button class="btn btn-primary btn-wide" id="btn-results">See results</button>
+    <section class="section container faq">
+      <h2>Frequently asked questions</h2>
+      <details>
+        <summary>Is it really private? How can I check?</summary>
+        <p>Yes — verifiably. Open DevTools (F12) → Network tab, then merge or split a file. You'll see the page load its own scripts and anonymous usage pings, but no request ever contains your document. You can even go offline after the page loads: the tools keep working.</p>
+      </details>
+      <details>
+        <summary>Is there a file size or page limit?</summary>
+        <p>Only your device's memory. Hundreds of pages are no problem on any modern laptop or phone. Very large scans (500&nbsp;MB+) depend on your device's RAM, since your device is doing the work.</p>
+      </details>
+      <details>
+        <summary>Why is it free? What's the catch?</summary>
+        <p>There's no catch to fund. Classic PDF sites pay for servers that process your files, so they push subscriptions. Here your device does the processing and the site is static files — hosting costs almost nothing.</p>
+      </details>
+      <details>
+        <summary>Do you support password-protected PDFs?</summary>
+        <p>Not yet. Encrypted files are detected and refused with a clear message rather than mangled. Decryption support is on the roadmap.</p>
+      </details>
+      <details>
+        <summary>Does it work offline?</summary>
+        <p>Once a tool page has loaded, yes — processing is fully local. Full offline installation (PWA) is on the roadmap.</p>
+      </details>
     </section>
   </main>
 
-  <!-- Help modal -->
-  <div class="modal hidden" id="modal-help">
-    <div class="modal-box">
-      <button class="modal-close" data-close>×</button>
-      <h2>How to play</h2>
-      <p><strong>One deal a day.</strong> Everyone in the world haggles with the same seller over the same item. The seller has a <strong>hidden floor price</strong> — your job is to get as close to it as possible.</p>
-      <ul class="help-list">
-        <li>💬 You have <strong>5 offers</strong>. Each one comes with a <strong>tactic</strong>.</li>
-        <li>🧠 Every seller has a personality. Read their intro and their replies — the right tactic on the right person works wonders. The wrong one can blow up the deal.</li>
-        <li>😡 Lowball too hard and they get angry. Too angry, and they walk. Repeat the same trick and it stops working.</li>
-        <li>🤝 Close the deal anytime at their current price — or hold out for a better one.</li>
-      </ul>
-      <p class="help-score">Score = how much of the possible discount you captured, out of 100. Share your emoji grid, keep your streak alive.</p>
-      <p class="help-tagline">New deal at midnight UTC. 🌙</p>
+  <footer class="site-footer">
+    <div class="container">
+      <span>NoUpload — private PDF tools</span>
+      <span class="upload-counter">Bytes of your files uploaded: 0 (and always will be)</span>
+      <span>Built on open source: pdf-lib (MIT) &amp; PDF.js (Apache-2.0)</span>
     </div>
-  </div>
-
-  <!-- Stats modal -->
-  <div class="modal hidden" id="modal-stats">
-    <div class="modal-box">
-      <button class="modal-close" data-close>×</button>
-      <h2>Statistics</h2>
-      <div class="stats-grid">
-        <div class="stat"><div class="stat-num" id="stat-played">0</div><div class="stat-label">Played</div></div>
-        <div class="stat"><div class="stat-num" id="stat-deals">0</div><div class="stat-label">Deals closed</div></div>
-        <div class="stat"><div class="stat-num" id="stat-avg">–</div><div class="stat-label">Avg score</div></div>
-        <div class="stat"><div class="stat-num" id="stat-best">–</div><div class="stat-label">Best</div></div>
-        <div class="stat"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Streak 🔥</div></div>
-        <div class="stat"><div class="stat-num" id="stat-maxstreak">0</div><div class="stat-label">Max streak</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Results modal -->
-  <div class="modal hidden" id="modal-results">
-    <div class="modal-box">
-      <button class="modal-close" data-close>×</button>
-      <h2 id="result-title">Deal closed!</h2>
-      <div class="result-score" id="result-score">0</div>
-      <div class="result-grade" id="result-grade"></div>
-      <p class="result-detail" id="result-detail"></p>
-      <div class="result-grid" id="result-grid"></div>
-      <button class="btn btn-primary btn-wide" id="btn-share">Share result 📋</button>
-      <button class="btn btn-ghost btn-wide" id="btn-practice">Play a practice deal 🎲</button>
-      <div class="countdown">Next deal in <span id="countdown">–</span></div>
-    </div>
-  </div>
-
-  <div class="toast hidden" id="toast"></div>
-
-  <script type="module" src="js/main.js"></script>
+  </footer>
 </body>
 </html>

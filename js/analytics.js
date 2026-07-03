@@ -1,5 +1,4 @@
-// Thin wrapper around PostHog. Never breaks the game if the script is
-// blocked (adblockers) or hasn't loaded yet.
+// PostHog wrapper — must never break a tool if analytics is blocked.
 
 export function track(event, props = {}) {
   try {
@@ -7,6 +6,6 @@ export function track(event, props = {}) {
       window.posthog.capture(event, props);
     }
   } catch {
-    /* analytics must never take the game down */
+    /* never let analytics take a tool down */
   }
 }

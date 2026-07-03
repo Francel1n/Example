@@ -1,92 +1,80 @@
-# LOWBALL 🤝 — The Daily Negotiation Game
+# NoUpload 🔒 — PDF tools that never see your files
 
-**One deal a day. Everyone on Earth haggles with the same seller.**
+**Merge, split, reorder and convert PDFs entirely in the browser. Zero upload, verifiably.**
 
-Every day at midnight UTC, a new negotiation drops: a 1974 Vespa, a food truck, a
-"definitely authentic" vintage watch. The seller has a **hidden floor price** and a
-personality — sentimental, stubborn, desperate, chatty, or a straight-up shark.
-You get **5 offers**, each paired with a tactic:
+Every day, millions of people push their contracts, payslips, IDs and medical records
+to third-party servers just to merge two PDFs — because that's how the big PDF sites
+work. None of that is technically necessary anymore: browsers are perfectly capable
+of doing the work locally. NoUpload ships the PDF engine *to you* instead of shipping
+your files *to a server*.
 
-| Tactic | | Works on… |
-|---|---|---|
-| 😐 Straight offer | no games | everyone (safe) |
-| 🔍 Spot a flaw | "is that rust?" | sharks — never the sentimental |
-| 🤫 Silence | name a price, say nothing | talkers |
-| 💵 Cash today | bills on the table | anyone in a hurry |
-| 🚪 Start to leave | risky bluff | the desperate — backfires on the stubborn |
-| 😊 Flatter | admire everything | the sentimental |
+## Tools
 
-Lowball too hard and the seller gets angry. Too angry and they **walk**, and you
-score zero. Close a great deal and you get a score out of 100, a grade
-(👑 *Silver Tongue* down to 🚪 *Doormat*), and a Wordle-style emoji grid to share:
+| Page | What it does |
+|---|---|
+| `merge.html` | Combine any number of PDFs into one, reorderable |
+| `split.html` | Extract pages with print-dialog ranges (`1-3, 7, 12-`) |
+| `organize.html` | Thumbnail every page; drag to reorder, rotate, delete, export |
+| `images-to-pdf.html` | JPG/PNG → one PDF (auto page size or centered A4) |
 
-```
-LOWBALL #14 — 82/100 🥇
-🤫📉 💵↘️ 😊🤝
-🔥 6 day streak
-```
+## The privacy claim, and how it's enforced
 
-## Why it works as a product
+- **No upload endpoint exists.** The site is static files; there is no server-side
+  processing anywhere.
+- **The claim is machine-verified.** The e2e test suite drives every tool in a real
+  Chromium and fails if *any* network request carries a file-sized body.
+- **Users can verify it themselves** — the landing page tells them how (DevTools →
+  Network tab; the tools even keep working offline once loaded).
+- Analytics (PostHog) capture anonymous usage events only: tool used, page counts,
+  durations. Never file names, never file contents.
 
-- **Daily ritual + streaks + shareable emoji grid** — the exact growth loop that
-  made Wordle explode, applied to a universally relatable fantasy: winning a
-  negotiation.
-- **The engine is fully deterministic** (seeded by the UTC date), so the whole
-  world plays the *same* seller with the *same* hidden floor — results are
-  comparable, which is what makes sharing them fun.
-- **Skill is real**: reading the seller's personality and picking the right
-  tactic roughly doubles your score vs. naive play (verified by simulation in
-  the test suite). Reckless lowballing busts ~1 game in 3.
-- **Zero backend, zero cost**: pure static HTML/CSS/JS, deploys to GitHub Pages.
-  No accounts, no cookies banner needed beyond analytics, nothing to scale.
+## Why this can win users
+
+- **Real, recurring need** — "merge pdf" and friends are some of the highest-volume
+  utility searches on the web, and every incumbent gates them behind uploads,
+  accounts, daily limits and premium tiers.
+- **A differentiator you can see**: no upload progress bar. Files process instantly
+  because the bytes never travel. Privacy-conscious niches (legal, health, HR,
+  journalists) actively search for this.
+- **Zero marginal cost** — static hosting scales to any traffic level for free,
+  so "free forever, no limits" is a sustainable promise, not a teaser.
 
 ## Architecture
 
 ```
-index.html          UI shell + PostHog snippet
-css/style.css       dark, mobile-first chat interface
-js/rng.js           seeded PRNG (xmur3 + mulberry32)
-js/data.js          14 scenarios, 5 personalities, all dialogue, tactics, grades
-js/engine.js        deterministic negotiation engine + par-based scoring
-js/main.js          game flow, chat rendering, modals
-js/storage.js       streaks & stats; games persist as replayable action logs
-js/share.js         emoji share grid (Web Share API + clipboard fallback)
-js/analytics.js     PostHog wrapper (safe when blocked)
-test/               engine test suite — run with `node --test`
+index.html            landing (SEO + privacy pitch + FAQ)
+merge / split /
+organize /
+images-to-pdf.html    one page per tool, thin inline glue code
+js/pdf-ops.js         all PDF logic — pure, DOM-free, unit-tested in Node
+js/ui.js              dropzone, file rows, downloads, toasts
+js/ph.js              PostHog EU snippet (anonymous usage analytics)
+js/analytics.js       capture wrapper (never breaks a tool if blocked)
+vendor/               pdf-lib 1.17.1 (MIT) + PDF.js 4.10 (Apache-2.0), vendored —
+                      no CDN, consistent with "nothing leaves this page"
+test/                 pdf-ops unit tests (node --test)
 ```
 
-Key design decisions:
-
-- **Replayable action logs.** Because the engine is deterministic, a mid-game
-  refresh restores the exact game by replaying your recorded actions against
-  the same seed. No game state is ever serialized.
-- **Par-based scoring.** Each day the engine computes *par* — the best price
-  achievable with perfect play against that seller. Your score measures how
-  much of that theoretical discount you captured, so a tough stubborn seller
-  is scored as generously as an easy desperate one.
-- **Diminishing tactics.** Repeating a tactic halves its effect each time,
-  forcing varied play.
+`js/pdf-ops.js` is deliberately isomorphic: the exact code that runs in the browser
+is unit-tested in Node against real PDFs built with pdf-lib.
 
 ## Analytics (PostHog)
 
-The full funnel is instrumented out of the box:
+Instrumented funnel per tool: `$pageview → files_added → tool_run → download_clicked`,
+plus `tool_error` with a stage tag. Properties include tool name, file/page counts,
+output size and processing time — enough to see which tools earn their keep and where
+people drop off, with zero personal data.
 
-`game_started → offer_made (×n) → deal_closed | negotiation_busted | walked_away → results_viewed → share_clicked`
-
-Event properties include game number, scenario, seller personality, tactic,
-offer-to-list ratio, rounds used, and final score — enough to answer questions
-like *"which personality busts the most players?"* or *"does anger predict
-churn?"*, and to A/B test difficulty with feature flags later.
-
-## Run locally
+## Develop
 
 ```bash
-npx serve .          # any static server works
-node --test          # engine test suite
+npx serve .    # any static server (ES modules need http, not file://)
+node --test    # unit tests
 ```
 
-## Deploy
+## Roadmap
 
-Pushing to `master` runs the tests and deploys to GitHub Pages via
-`.github/workflows/deploy.yml`. One-time setup: repo **Settings → Pages →
-Source: GitHub Actions**.
+- Compress PDF (image re-encoding via canvas)
+- Password removal/protection
+- PWA install for full offline use
+- French localization (`/fr`)

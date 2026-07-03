@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reorder, rotate &amp; delete PDF pages without uploading — free &amp; private | NoUpload</title>
+  <meta name="description" content="See every page of your PDF, drag to reorder, rotate or delete pages, and export — entirely in your browser. No upload, no server, no account." />
+  <meta name="theme-color" content="#0a7d4f" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/ph.js"></script>
+  <script src="vendor/pdf-lib.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="logo" href="./"><span class="no">No</span>Upload<span class="no">.</span></a>
+      <nav class="nav">
+        <a href="merge.html">Merge</a>
+        <a href="split.html">Split</a>
+        <a href="organize.html" class="active">Organize</a>
+        <a href="images-to-pdf.html">Images → PDF</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="tool-page container">
+    <span class="privacy-pill"><span class="dot"></span> processed on your device</span>
+    <h1>Organize PDF pages</h1>
+    <p class="lede">Every page as a thumbnail. Drag to reorder (or use the arrows),
+    rotate sideways scans, delete blank pages — then export a clean PDF.</p>
+
+    <div class="dropzone" id="dropzone">
+      <div class="dz-icon">🔀</div>
+      <div class="dz-main">Drop a PDF here, or click to choose</div>
+      <div class="dz-sub">Pages appear below as thumbnails</div>
+    </div>
+
+    <div class="page-grid" id="page-grid"></div>
+
+    <div class="action-bar">
+      <button class="btn btn-primary hidden" id="btn-export">Export PDF</button>
+      <button class="btn btn-ghost hidden" id="btn-reset">Start over</button>
+    </div>
+
+    <div class="result-box hidden" id="result">
+      <div class="r-text">
+        <div class="r-title">PDF rebuilt!</div>
+        <div class="r-sub" id="result-sub"></div>
+      </div>
+      <button class="btn btn-primary" id="btn-download">Download PDF</button>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>NoUpload — private PDF tools</span>
+      <span class="upload-counter">Bytes of your files uploaded: 0 (and always will be)</span>
+    </div>
+  </footer>
+
+  <script type="module">
+    import * as pdfjs from './vendor/pdf.min.mjs';
+    import { rebuildPdf } from './js/pdf-ops.js';
+    import { initDropzone, readFileBytes, downloadBytes, humanSize, toast, busy } from './js/ui.js';
+    import { track } from './js/analytics.js';
+
+    pdfjs.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.mjs';
+
+    let source = null;      // { name, bytes }
+    let output = null;
+    const grid = document.getElementById('page-grid');
+    const btnExport = document.getElementById('btn-export');
+    const btnReset = document.getElementById('btn-reset');
+    const result = document.getElementById('result');
+
+    // Each card carries data-index (original page) and data-rotate (added degrees).
+    function makeCard(pageIndex, canvas) {
+      const card = document.createElement('div');
+      card.className = 'page-card';
+      card.draggable = true;
+      card.dataset.index = pageIndex;
+      card.dataset.rotate = '0';
+      canvas.style.transition = 'transform .2s';
+      card.appendChild(canvas);
+      const label = document.createElement('div');
+      label.className = 'p-label';
+      label.textContent = `Page ${pageIndex + 1}`;
+      card.appendChild(label);
+
+      const actions = document.createElement('div');
+      actions.className = 'p-actions';
+      const mkBtn = (txt, title, fn) => {
+        const b = document.createElement('button');
+        b.textContent = txt; b.title = title;
+        b.onclick = (e) => { e.stopPropagation(); fn(); invalidate(); };
+        actions.appendChild(b);
+      };
+      mkBtn('←', 'Move left', () => card.previousElementSibling && grid.insertBefore(card, card.previousElementSibling));
+      mkBtn('↻', 'Rotate 90°', () => {
+        const r = (parseInt(card.dataset.rotate, 10) + 90) % 360;
+        card.dataset.rotate = String(r);
+        canvas.style.transform = `rotate(${r}deg) scale(${r % 180 ? 0.72 : 1})`;
+      });
+      mkBtn('✕', 'Delete page', () => card.remove());
+      mkBtn('→', 'Move right', () => card.nextElementSibling && grid.insertBefore(card.nextElementSibling, card));
+      card.appendChild(actions);
+
+      // Drag & drop reordering
+      card.addEventListener('dragstart', (e) => {
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', () => card.classList.remove('dragging'));
+      card.addEventListener('dragover', (e) => { e.preventDefault(); card.classList.add('dragover-card'); });
+      card.addEventListener('dragleave', () => card.classList.remove('dragover-card'));
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('dragover-card');
+        const dragging = grid.querySelector('.dragging');
+        if (!dragging || dragging === card) return;
+        const cards = [...grid.children];
+        const from = cards.indexOf(dragging);
+        const to = cards.indexOf(card);
+        grid.insertBefore(dragging, from < to ? card.nextElementSibling : card);
+        invalidate();
+      });
+      return card;
+    }
+
+    function invalidate() { result.classList.add('hidden'); output = null; }
+
+    async function loadPdf(file) {
+      const bytes = await readFileBytes(file);
+      // pdf.js consumes (detaches) the buffer it's given — keep our own copy.
+      const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise;
+      source = { name: file.name, bytes };
+      grid.innerHTML = '';
+      invalidate();
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const viewport = page.getViewport({ scale: 1 });
+        const scale = 260 / viewport.width;
+        const vp = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+        grid.appendChild(makeCard(i - 1, canvas));
+      }
+      btnExport.classList.remove('hidden');
+      btnReset.classList.remove('hidden');
+      track('files_added', { tool: 'organize', count: 1, pages: doc.numPages });
+    }
+
+    initDropzone(document.getElementById('dropzone'), {
+      accept: 'application/pdf,.pdf',
+      multiple: false,
+      onFiles: async ([file]) => {
+        try {
+          await loadPdf(file);
+        } catch (e) {
+          toast('This file could not be read as a PDF.', true);
+          track('tool_error', { tool: 'organize', stage: 'read', message: String(e.message || e) });
+        }
+      },
+    });
+
+    btnExport.addEventListener('click', async () => {
+      const spec = [...grid.children].map((c) => ({
+        index: parseInt(c.dataset.index, 10),
+        rotate: parseInt(c.dataset.rotate, 10),
+      }));
+      if (spec.length === 0) { toast('All pages are deleted — nothing to export.', true); return; }
+      const done = busy(btnExport, 'Rebuilding…');
+      const t0 = performance.now();
+      try {
+        output = await rebuildPdf(source.bytes, spec);
+        document.getElementById('result-sub').textContent =
+          `${spec.length} pages · ${humanSize(output.length)}`;
+        result.classList.remove('hidden');
+        result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        track('tool_run', {
+          tool: 'organize', pages_out: spec.length,
+          rotated: spec.filter((s) => s.rotate % 360 !== 0).length,
+          bytes_out: output.length, ms: Math.round(performance.now() - t0),
+        });
+      } catch (e) {
+        toast(e.message, true);
+        track('tool_error', { tool: 'organize', stage: 'run', message: e.message });
+      } finally {
+        done();
+      }
+    });
+
+    btnReset.addEventListener('click', () => {
+      grid.innerHTML = '';
+      source = null;
+      invalidate();
+      btnExport.classList.add('hidden');
+      btnReset.classList.add('hidden');
+    });
+
+    document.getElementById('btn-download').addEventListener('click', () => {
+      if (!output) return;
+      const base = source.name.replace(/\.pdf$/i, '');
+      downloadBytes(output, `${base}-organized.pdf`);
+      track('download_clicked', { tool: 'organize', bytes: output.length });
+    });
+  </script>
+</body>
+</html>
